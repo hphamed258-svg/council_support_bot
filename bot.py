@@ -27,8 +27,21 @@ BTN_SUGGESTIONS = "مطالبات و پیشنهادات"
 BTN_EVENTS = "ارسال اطلاعات رویدادها"
 BTN_CANCEL = "❌ انصراف"
 
-# وضعیت موقت هر کاربر؛ بدون دیتابیس
+CAMPUSES = [
+    "پردیس مهریز",
+    "هنر و معماری",
+    "علوم انسانی",
+    "فنی مهندسی",
+    "منابع طبیعی",
+    "علوم پایه",
+    "بین رشته ای",
+]
+
+# وضعیت موقت کاربران؛ بدون دیتابیس
 user_states = {}
+
+# پردیس انتخاب‌شده توسط هر کاربر
+user_campuses = {}
 
 # شناسه پیام پوستر در گروه ادمین‌ها
 event_poster_message_ids = {}
@@ -52,7 +65,23 @@ def cancel_menu():
     keyboard = types.ReplyKeyboardMarkup(
         resize_keyboard=True
     )
+
     keyboard.add(types.KeyboardButton(BTN_CANCEL))
+
+    return keyboard
+
+
+def campus_menu():
+    keyboard = types.ReplyKeyboardMarkup(
+        resize_keyboard=True,
+        row_width=2
+    )
+
+    for campus in CAMPUSES:
+        keyboard.add(types.KeyboardButton(campus))
+
+    keyboard.add(types.KeyboardButton(BTN_CANCEL))
+
     return keyboard
 
 
@@ -93,29 +122,29 @@ def send_to_admin_group(text):
         return False
 
 
+def clear_user_data(user_id):
+    user_states.pop(user_id, None)
+    user_campuses.pop(user_id, None)
+    event_poster_message_ids.pop(user_id, None)
+
+
 # -------------------- Start --------------------
 
 @bot.message_handler(commands=["start"])
 def start(message):
-    user_id = message.from_user.id
-
-    user_states.pop(user_id, None)
-    event_poster_message_ids.pop(user_id, None)
+    clear_user_data(message.from_user.id)
 
     bot.send_message(
         message.chat.id,
-        "سلام، به ربات پشتیبان شورای اجرایی خوش آمدید.\n"
-        "لطفاً از بین گزینه‌های زیر یکی را انتخاب کنید.",
+        "سلام، به ربات پشتیبان شورای اجرایی مجمع انجمن های علمی دانشگاه یزد خوش آمدید.\n"
+        "لطفا از بین گزینه های زیر یکی را انتخاب کنید",
         reply_markup=main_menu()
     )
 
 
 @bot.message_handler(commands=["cancel"])
 def cancel_command(message):
-    user_id = message.from_user.id
-
-    user_states.pop(user_id, None)
-    event_poster_message_ids.pop(user_id, None)
+    clear_user_data(message.from_user.id)
 
     bot.send_message(
         message.chat.id,
@@ -146,12 +175,15 @@ def get_chat_id(message):
     func=lambda message: message.text == BTN_SUGGESTIONS
 )
 def suggestions_start(message):
-    user_states[message.from_user.id] = "suggestion"
+    user_id = message.from_user.id
+
+    user_states[user_id] = "suggestion_campus"
+    user_campuses.pop(user_id, None)
 
     bot.send_message(
         message.chat.id,
-        "لطفاً مطالبه یا پیشنهاد خود را ارسال کنید:",
-        reply_markup=cancel_menu()
+        "لطفاً پردیس خودتون رو انتخاب کنید:",
+        reply_markup=campus_menu()
     )
 
 
@@ -179,15 +211,33 @@ def event_start(message):
     func=lambda message: message.text == BTN_CANCEL
 )
 def cancel_button(message):
-    user_id = message.from_user.id
-
-    user_states.pop(user_id, None)
-    event_poster_message_ids.pop(user_id, None)
+    clear_user_data(message.from_user.id)
 
     bot.send_message(
         message.chat.id,
         "عملیات لغو شد. به منوی اصلی برگشتید.",
         reply_markup=main_menu()
+    )
+
+
+# -------------------- Receive Campus Selection --------------------
+
+@bot.message_handler(
+    func=lambda message: (
+        user_states.get(message.from_user.id) == "suggestion_campus"
+        and message.text in CAMPUSES
+    )
+)
+def receive_campus(message):
+    user_id = message.from_user.id
+
+    user_campuses[user_id] = message.text
+    user_states[user_id] = "suggestion"
+
+    bot.send_message(
+        message.chat.id,
+        "لطفاً مطالبه یا پیشنهاد خود را بنویسید:",
+        reply_markup=cancel_menu()
     )
 
 
@@ -209,18 +259,16 @@ def receive_event_photo(message):
             "شناسه گروه ادمین‌ها هنوز تنظیم نشده است.",
             reply_markup=main_menu()
         )
-        user_states.pop(user_id, None)
+        clear_user_data(user_id)
         return
 
     try:
-        # ارسال پوستر به گروه ادمین‌ها
         sent_poster = bot.send_photo(
             int(ADMIN_GROUP_ID),
             message.photo[-1].file_id,
             caption=f"📌 پوستر رویداد جدید\n\n{info}"
         )
 
-        # نگهداری شناسه پیام پوستر برای اتصال کپشن
         event_poster_message_ids[user_id] = (
             sent_poster.message_id
         )
@@ -237,8 +285,7 @@ def receive_event_photo(message):
     except Exception:
         logger.exception("خطا در دریافت یا ارسال پوستر")
 
-        user_states.pop(user_id, None)
-        event_poster_message_ids.pop(user_id, None)
+        clear_user_data(user_id)
 
         bot.send_message(
             message.chat.id,
@@ -254,18 +301,30 @@ def receive_text(message):
     user_id = message.from_user.id
     state = user_states.get(user_id)
 
+    # کاربر باید ابتدا یک پردیس معتبر انتخاب کند
+    if state == "suggestion_campus":
+        bot.send_message(
+            message.chat.id,
+            "لطفاً پردیس خودتون رو از بین گزینه‌های زیر انتخاب کنید:",
+            reply_markup=campus_menu()
+        )
+        return
+
+    # ثبت مطالبه یا پیشنهاد
     if state == "suggestion":
         info = get_sender_info(message)
+        campus = user_campuses.get(user_id, "نامشخص")
 
         success = send_to_admin_group(
             "📩 مطالبه یا پیشنهاد جدید\n\n"
+            f"پردیس: {campus}\n"
             f"{info}\n\n"
             f"متن پیام:\n{message.text}"
         )
 
-        user_states.pop(user_id, None)
-
         if success:
+            clear_user_data(user_id)
+
             bot.send_message(
                 message.chat.id,
                 "پیام شما با موفقیت ارسال شد. ممنون از همراهی شما 🌱",
@@ -274,19 +333,20 @@ def receive_text(message):
         else:
             bot.send_message(
                 message.chat.id,
-                "ارسال پیام با مشکل مواجه شد. لطفاً بعداً تلاش کنید.",
-                reply_markup=main_menu()
+                "ارسال پیام با مشکل مواجه شد. "
+                "لطفاً دوباره تلاش کنید.",
+                reply_markup=cancel_menu()
             )
 
         return
 
+    # دریافت کپشن رویداد
     if state == "event_caption":
         info = get_sender_info(message)
         poster_message_id = event_poster_message_ids.get(user_id)
 
         if not ADMIN_GROUP_ID or not poster_message_id:
-            user_states.pop(user_id, None)
-            event_poster_message_ids.pop(user_id, None)
+            clear_user_data(user_id)
 
             bot.send_message(
                 message.chat.id,
@@ -297,7 +357,7 @@ def receive_text(message):
             return
 
         try:
-            # ارسال مشخصات فرستنده به‌عنوان پیام توضیحی
+            # مشخصات فرستنده در پاسخ به پوستر
             bot.send_message(
                 int(ADMIN_GROUP_ID),
                 f"📝 کپشن رویداد جدید\n\n{info}",
@@ -305,7 +365,6 @@ def receive_text(message):
             )
 
             # کپی پیام اصلی برای حفظ لینک‌ها و قالب‌بندی
-            # کپشن به پیام پوستر در گروه پاسخ داده می‌شود
             bot.copy_message(
                 chat_id=int(ADMIN_GROUP_ID),
                 from_chat_id=message.chat.id,
@@ -313,8 +372,7 @@ def receive_text(message):
                 reply_to_message_id=poster_message_id
             )
 
-            user_states.pop(user_id, None)
-            event_poster_message_ids.pop(user_id, None)
+            clear_user_data(user_id)
 
             bot.send_message(
                 message.chat.id,
@@ -342,8 +400,12 @@ def receive_text(message):
         )
         return
 
-    # انتخاب گزینه‌های منوی اصلی
-    if message.text not in (BTN_SUGGESTIONS, BTN_EVENTS, BTN_CANCEL):
+    # پیام خارج از فرایندهای فعال
+    if message.text not in (
+        BTN_SUGGESTIONS,
+        BTN_EVENTS,
+        BTN_CANCEL
+    ):
         bot.send_message(
             message.chat.id,
             "لطفاً یکی از گزینه‌های منوی اصلی را انتخاب کنید.",
@@ -363,6 +425,13 @@ def unsupported_media(message):
         bot.send_message(
             message.chat.id,
             "لطفاً پوستر را به صورت عکس ارسال کنید."
+        )
+
+    elif state == "suggestion_campus":
+        bot.send_message(
+            message.chat.id,
+            "لطفاً ابتدا پردیس خود را از منوی گزینه‌ها انتخاب کنید.",
+            reply_markup=campus_menu()
         )
 
     elif state == "suggestion":
