@@ -77,9 +77,11 @@ def campus_menu():
         row_width=2
     )
 
-    for campus in CAMPUSES:
-        keyboard.add(types.KeyboardButton(campus))
 
+    keyboard.add(types.KeyboardButton("پردیس مهریز"),types.KeyboardButton("هنر و معماری"))
+    keyboard.add(types.KeyboardButton("علوم انسانی"),types.KeyboardButton("فنی مهندسی"))
+    keyboard.add(types.KeyboardButton("منابع طبیعی"),types.KeyboardButton("علوم پایه"))
+    keyboard.add(types.KeyboardButton("بین رشته‌ای"))
     keyboard.add(types.KeyboardButton(BTN_CANCEL))
 
     return keyboard
@@ -136,8 +138,9 @@ def start(message):
 
     bot.send_message(
         message.chat.id,
-        "سلام، به ربات پشتیبان شورای اجرایی مجمع انجمن های علمی دانشگاه یزد خوش آمدید.\n"
-        "لطفا از بین گزینه های زیر یکی را انتخاب کنید",
+        """سلام👋🏻
+        ✨به ربات پشتیبان شورای اجرایی مجمع انجمن های علمی دانشگاه یزد خوش آمدید
+        لطفا از بین گزینه های زیر یکی را انتخاب کنید""",
         reply_markup=main_menu()
     )
 
