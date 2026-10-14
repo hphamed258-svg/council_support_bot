@@ -172,6 +172,17 @@ def get_chat_id(message):
     )
 
 
+@bot.message_handler(commands=["topicid"])
+def get_topic_id(message):
+    thread_id = getattr(message, "message_thread_id", None)
+
+    bot.reply_to(
+        message,
+        f"Group ID: {message.chat.id}\n"
+        f"Topic ID: {thread_id}"
+    )
+
+
 # -------------------- Suggestions --------------------
 
 @bot.message_handler(
