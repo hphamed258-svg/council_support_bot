@@ -471,7 +471,7 @@ logger = logging.getLogger(__name__)
 # ==================================================
 
 BTN_SUGGESTIONS = "مطالبات و پیشنهادات"
-BTN_EVENTS = "ارسال اطلاعات رویدادها"
+# BTN_EVENTS = "ارسال اطلاعات رویدادها"
 BTN_CANCEL = "❌ انصراف"
 BTN_BACK = "🔙 بازگشت به منوی اصلی"
 
@@ -715,18 +715,18 @@ def handle_text(message):
     # شروع ارسال اطلاعات رویداد
     # ----------------------------------------------
 
-    if text == BTN_EVENTS:
-        clear_user_data(user_id)
+    # if text == BTN_EVENTS:
+    #     clear_user_data(user_id)
 
-        user_states[user_id] = "event_choose_campus"
+    #     user_states[user_id] = "event_choose_campus"
 
-        bot.send_message(
-            message.chat.id,
-            "📌 برای ارسال اطلاعات رویداد، "
-            "ابتدا پردیس برگزارکننده رو انتخاب کنید:",
-            reply_markup=campus_menu()
-        )
-        return
+    #     bot.send_message(
+    #         message.chat.id,
+    #         "📌 برای ارسال اطلاعات رویداد، "
+    #         "ابتدا پردیس برگزارکننده رو انتخاب کنید:",
+    #         reply_markup=campus_menu()
+    #     )
+    #     return
 
     # ----------------------------------------------
     # انتخاب پردیس برای مطالبه یا پیشنهاد
@@ -786,79 +786,79 @@ def handle_text(message):
     # انتخاب پردیس برای ارسال رویداد
     # ----------------------------------------------
 
-    if state == "event_choose_campus":
-        if text not in CAMPUSES:
-            bot.send_message(
-                message.chat.id,
-                "لطفاً یکی از پردیس‌های موجود در منو رو انتخاب کنید.",
-                reply_markup=campus_menu()
-            )
-            return
+    # if state == "event_choose_campus":
+    #     if text not in CAMPUSES:
+    #         bot.send_message(
+    #             message.chat.id,
+    #             "لطفاً یکی از پردیس‌های موجود در منو رو انتخاب کنید.",
+    #             reply_markup=campus_menu()
+    #         )
+    #         return
 
-        user_campuses[user_id] = text
-        user_states[user_id] = "waiting_event_photo"
+    #     user_campuses[user_id] = text
+    #     user_states[user_id] = "waiting_event_photo"
 
-        bot.send_message(
-            message.chat.id,
-            f"🏢 پردیس انتخاب‌شده: {text}\n\n"
-            "🖼️ حالا لطفاً پوستر رویداد رو به‌صورت عکس ارسال کنید:",
-            reply_markup=cancel_menu()
-        )
-        return
+    #     bot.send_message(
+    #         message.chat.id,
+    #         f"🏢 پردیس انتخاب‌شده: {text}\n\n"
+    #         "🖼️ حالا لطفاً پوستر رویداد رو به‌صورت عکس ارسال کنید:",
+    #         reply_markup=cancel_menu()
+    #     )
+    #     return
 
     # ----------------------------------------------
     # دریافت توضیحات رویداد
     # ----------------------------------------------
 
-    if state == "waiting_event_caption":
-        poster_message_id = event_poster_message_ids.get(
-            user_id
-        )
+    # if state == "waiting_event_caption":
+    #     poster_message_id = event_poster_message_ids.get(
+    #         user_id
+    #     )
 
-        if not poster_message_id:
-            clear_user_data(user_id)
+    #     if not poster_message_id:
+    #         clear_user_data(user_id)
 
-            bot.send_message(
-                message.chat.id,
-                "متأسفانه اطلاعات پوستر پیدا نشد. "
-                "لطفاً دوباره از منوی اصلی شروع کنید.",
-                reply_markup=main_menu()
-            )
-            return
+    #         bot.send_message(
+    #             message.chat.id,
+    #             "متأسفانه اطلاعات پوستر پیدا نشد. "
+    #             "لطفاً دوباره از منوی اصلی شروع کنید.",
+    #             reply_markup=main_menu()
+    #         )
+    #         return
 
-        campus = user_campuses.get(
-            user_id,
-            "نامشخص"
-        )
+    #     campus = user_campuses.get(
+    #         user_id,
+    #         "نامشخص"
+    #     )
 
         # ارسال توضیحات با حفظ قالب‌بندی و لینک‌ها
-        bot.copy_message(
-            chat_id=ADMIN_GROUP_ID,
-            from_chat_id=message.chat.id,
-            message_id=message.message_id,
-            message_thread_id=EVENTS_TOPIC_ID,
-            reply_to_message_id=poster_message_id
-        )
+        # bot.copy_message(
+        #     chat_id=ADMIN_GROUP_ID,
+        #     from_chat_id=message.chat.id,
+        #     message_id=message.message_id,
+        #     message_thread_id=EVENTS_TOPIC_ID,
+        #     reply_to_message_id=poster_message_id
+        # )
 
-        # ارسال مشخصات فرستنده و پردیس در پاسخ به پوستر
-        bot.send_message(
-            chat_id=ADMIN_GROUP_ID,
-            text=(
-                f"🏢 پردیس برگزارکننده: {campus}\n"
-                f"{sender_info(message.from_user)}"
-            ),
-            message_thread_id=EVENTS_TOPIC_ID,
-            reply_to_message_id=poster_message_id
-        )
+        # # ارسال مشخصات فرستنده و پردیس در پاسخ به پوستر
+        # bot.send_message(
+        #     chat_id=ADMIN_GROUP_ID,
+        #     text=(
+        #         f"🏢 پردیس برگزارکننده: {campus}\n"
+        #         f"{sender_info(message.from_user)}"
+        #     ),
+        #     message_thread_id=EVENTS_TOPIC_ID,
+        #     reply_to_message_id=poster_message_id
+        # )
 
-        clear_user_data(user_id)
+        # clear_user_data(user_id)
 
-        bot.send_message(
-            message.chat.id,
-            "✅ اطلاعات رویداد شما با موفقیت ارسال شد.",
-            reply_markup=main_menu()
-        )
-        return
+        # bot.send_message(
+        #     message.chat.id,
+        #     "✅ اطلاعات رویداد شما با موفقیت ارسال شد.",
+        #     reply_markup=main_menu()
+        # )
+        # return
 
     # ----------------------------------------------
     # پیام پیش‌فرض
@@ -875,94 +875,94 @@ def handle_text(message):
 # دریافت پوستر رویداد
 # ==================================================
 
-@bot.message_handler(content_types=["photo"])
-def handle_photo(message):
-    user_id = message.from_user.id
-    state = user_states.get(user_id)
+# @bot.message_handler(content_types=["photo"])
+# def handle_photo(message):
+#     user_id = message.from_user.id
+#     state = user_states.get(user_id)
 
-    if state != "waiting_event_photo":
-        return
+#     if state != "waiting_event_photo":
+#         return
 
-    campus = user_campuses.get(
-        user_id,
-        "نامشخص"
-    )
+#     campus = user_campuses.get(
+#         user_id,
+#         "نامشخص"
+#     )
 
-    # ارسال پوستر به تاپیک رویدادها
-    sent_poster = bot.send_photo(
-        chat_id=ADMIN_GROUP_ID,
-        photo=message.photo[-1].file_id,
-        caption=(
-            "📌 پوستر رویداد جدید\n"
-            f"🏢 پردیس: {campus}"
-        ),
-        message_thread_id=EVENTS_TOPIC_ID
-    )
+#     # ارسال پوستر به تاپیک رویدادها
+#     sent_poster = bot.send_photo(
+#         chat_id=ADMIN_GROUP_ID,
+#         photo=message.photo[-1].file_id,
+#         caption=(
+#             "📌 پوستر رویداد جدید\n"
+#             f"🏢 پردیس: {campus}"
+#         ),
+#         message_thread_id=EVENTS_TOPIC_ID
+#     )
 
-    event_poster_message_ids[user_id] = (
-        sent_poster.message_id
-    )
+#     event_poster_message_ids[user_id] = (
+#         sent_poster.message_id
+#     )
 
-    # مشخصات فرستنده در پاسخ به پوستر
-    bot.send_message(
-        chat_id=ADMIN_GROUP_ID,
-        text=sender_info(message.from_user),
-        message_thread_id=EVENTS_TOPIC_ID,
-        reply_to_message_id=sent_poster.message_id
-    )
+#     # مشخصات فرستنده در پاسخ به پوستر
+#     bot.send_message(
+#         chat_id=ADMIN_GROUP_ID,
+#         text=sender_info(message.from_user),
+#         message_thread_id=EVENTS_TOPIC_ID,
+#         reply_to_message_id=sent_poster.message_id
+#     )
 
-    user_states[user_id] = "waiting_event_caption"
+#     user_states[user_id] = "waiting_event_caption"
 
-    bot.send_message(
-        message.chat.id,
-        "📝 حالا توضیحات رویداد رو در پیام بعدی ارسال کنید.\n\n"
-        "می‌تونید متن، لینک و قالب‌بندی دلخواهتون رو "
-        "در همون پیام قرار بدید.",
-        reply_markup=cancel_menu()
-    )
+#     bot.send_message(
+#         message.chat.id,
+#         "📝 حالا توضیحات رویداد رو در پیام بعدی ارسال کنید.\n\n"
+#         "می‌تونید متن، لینک و قالب‌بندی دلخواهتون رو "
+#         "در همون پیام قرار بدید.",
+#         reply_markup=cancel_menu()
+#     )
 
 
 # ==================================================
 # مدیریت رسانه‌های نامعتبر در مراحل دریافت اطلاعات
 # ==================================================
 
-@bot.message_handler(
-    content_types=[
-        "document",
-        "video",
-        "audio",
-        "voice",
-        "sticker",
-        "animation",
-        "video_note",
-        "location",
-        "contact"
-    ]
-)
-def handle_other_media(message):
-    user_id = message.from_user.id
-    state = user_states.get(user_id)
+# @bot.message_handler(
+#     content_types=[
+#         "document",
+#         "video",
+#         "audio",
+#         "voice",
+#         "sticker",
+#         "animation",
+#         "video_note",
+#         "location",
+#         "contact"
+#     ]
+# )
+# def handle_other_media(message):
+#     user_id = message.from_user.id
+#     state = user_states.get(user_id)
 
-    if state == "waiting_event_photo":
-        bot.send_message(
-            message.chat.id,
-            "لطفاً پوستر رو به‌صورت عکس ارسال کنید.",
-            reply_markup=cancel_menu()
-        )
+#     if state == "waiting_event_photo":
+#         bot.send_message(
+#             message.chat.id,
+#             "لطفاً پوستر رو به‌صورت عکس ارسال کنید.",
+#             reply_markup=cancel_menu()
+#         )
 
-    elif state == "waiting_event_caption":
-        bot.send_message(
-            message.chat.id,
-            "لطفاً توضیحات رویداد رو به‌صورت پیام متنی ارسال کنید.",
-            reply_markup=cancel_menu()
-        )
+#     elif state == "waiting_event_caption":
+#         bot.send_message(
+#             message.chat.id,
+#             "لطفاً توضیحات رویداد رو به‌صورت پیام متنی ارسال کنید.",
+#             reply_markup=cancel_menu()
+#         )
 
-    elif state == "waiting_suggestion":
-        bot.send_message(
-            message.chat.id,
-            "لطفاً مطالبه یا پیشنهاد خودتون رو به‌صورت متن ارسال کنید.",
-            reply_markup=cancel_menu()
-        )
+#     elif state == "waiting_suggestion":
+#         bot.send_message(
+#             message.chat.id,
+#             "لطفاً مطالبه یا پیشنهاد خودتون رو به‌صورت متن ارسال کنید.",
+#             reply_markup=cancel_menu()
+#         )
 
 
 # ==================================================
